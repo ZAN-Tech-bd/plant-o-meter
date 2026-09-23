@@ -1,0 +1,18 @@
+# ── Node ──────────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+
+# ── Server ────────────────────────────────────────────────────────────────────
+server/.env
+server/plant-o-meter.db
+server/plant-o-meter.db-shm
+server/plant-o-meter.db-wal
+
+# ── Next.js ───────────────────────────────────────────────────────────────────
+dashboard/.next/
+dashboard/.env.local
+dashboard/out/
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
