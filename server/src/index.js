@@ -1,6 +1,12 @@
-// ─── index.js ─────────────────────────────────────────────────────────────────
-// Plant-o-Meter backend & admin panel entry point.
-// Fastify + libsql SQLite + static Admin UI — no cloud dependencies except Groq API.
+/**
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ZAN TECH · PLANT-O-METER™ ENTERPRISE AGRITECH IOT SUITE
+ * Telemetry Ingestion Engine & Industrial Admin Gateway
+ *
+ * Copyright (c) 2026 ZAN Tech. All Rights Reserved.
+ * Proprietary & Confidential — ZAN Tech Engineering Division
+ * ══════════════════════════════════════════════════════════════════════════════
+ */
 
 import 'dotenv/config';
 import path from 'path';

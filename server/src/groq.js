@@ -1,18 +1,22 @@
-// ─── groq.js ──────────────────────────────────────────────────────────────────
-// Wraps the Groq API call for tree suggestions.
-// Uses the OpenAI-compatible SDK endpoint.
+/**
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ZAN TECH · PLANT-O-METER™ ENTERPRISE AGRITECH IOT SUITE
+ * Autonomous Agronomic Decision Support & Agro-Forestry Recommendation Engine
+ *
+ * Copyright (c) 2026 ZAN Tech. All Rights Reserved.
+ * Proprietary & Confidential — ZAN Tech Engineering Division
+ * ══════════════════════════════════════════════════════════════════════════════
+ */
 
 import Groq from 'groq-sdk';
 
-// Client is lazily initialised so the server still starts without a key
-// (useful for testing the rest of the API offline).
 let _client = null;
 
 function getClient() {
   if (!_client) {
     if (!process.env.GROQ_API_KEY) {
       throw new Error(
-        'GROQ_API_KEY is not set. Copy server/.env.example → server/.env and add your key.'
+        'GROQ_API_KEY is not configured in server/.env. Provide an authorized Groq Cloud API key.'
       );
     }
     _client = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -21,39 +25,42 @@ function getClient() {
 }
 
 /**
- * Ask Groq to suggest trees/plants suited to the given sensor reading.
- * Returns { trees: [{ name, reason }], summary } or throws on error.
+ * Executes agronomic evaluation of real-time soil telemetry.
+ * Returns { trees: [{ name, reason }], summary }
  *
  * @param {{ moisture: number, temperature: number, ph: number }} reading
  */
 export async function suggestTrees(reading) {
   const { moisture, temperature, ph } = reading;
 
-  const prompt = `You are an agricultural assistant helping school children understand plants.
-Given these soil conditions:
-- Soil moisture: ${moisture.toFixed(1)}%
-- Soil/water temperature: ${temperature.toFixed(1)}°C
-- Estimated soil pH: ${ph.toFixed(1)}
+  const prompt = `You are an expert agronomic decision engine and agro-forestry specialist analyzing soil conditions for Bangladesh agricultural regions.
+Analyze the following physicochemical parameters:
+- Volumetric Soil Moisture: ${moisture.toFixed(1)}% VWC
+- Sub-surface Temperature: ${temperature.toFixed(1)}°C
+- Active Soil pH: ${ph.toFixed(2)}
 
-Suggest exactly 3 trees or plants that are well-suited to these exact conditions AND are common or native to Bangladesh.
-For each plant, give one short, fun sentence explaining why it likes these conditions — use simple words a 10-year-old can understand.
-Also write one short encouraging sentence for the kids looking at this display.
+Recommend exactly 3 tree species or high-value perennial cultivars optimally suited to these precise soil conditions and indigenous to Bangladesh's agro-ecological zones.
+For each plant, provide:
+1. "name": The common name followed by its botanical/scientific name in parentheses (e.g., "Jackfruit (Artocarpus heterophyllus)").
+2. "reason": A concise, technically sound, professional agronomic rationale detailing why this species thrives in this moisture, thermal, and pH profile.
 
-Respond with ONLY valid JSON, no markdown, no extra text. Use this exact shape:
+Provide a "summary": A brief, authoritative agronomic verdict characterizing the current soil quality and overall planting suitability.
+
+Respond STRICTLY with valid JSON (no markdown formatting, no code blocks):
 {
   "trees": [
-    { "name": "Plant Name", "reason": "Kid-friendly one-sentence reason." },
-    { "name": "Plant Name", "reason": "Kid-friendly one-sentence reason." },
-    { "name": "Plant Name", "reason": "Kid-friendly one-sentence reason." }
+    { "name": "Common Name (Botanical Name)", "reason": "Professional agronomic rationale." },
+    { "name": "Common Name (Botanical Name)", "reason": "Professional agronomic rationale." },
+    { "name": "Common Name (Botanical Name)", "reason": "Professional agronomic rationale." }
   ],
-  "summary": "One encouraging sentence for kids."
+  "summary": "Executive agronomic assessment of current soil conditions."
 }`;
 
   const completion = await getClient().chat.completions.create({
     model: 'llama-3.1-8b-instant',
     messages: [{ role: 'user', content: prompt }],
-    temperature: 0.7,
-    max_tokens: 512,
+    temperature: 0.5,
+    max_tokens: 600,
     response_format: { type: 'json_object' },
   });
 
@@ -63,12 +70,11 @@ Respond with ONLY valid JSON, no markdown, no extra text. Use this exact shape:
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new Error(`Groq returned non-JSON response: ${raw.slice(0, 200)}`);
+    throw new Error(`Inference engine delivered malformed JSON response: ${raw.slice(0, 200)}`);
   }
 
-  // Validate shape
   if (!Array.isArray(parsed.trees) || !parsed.summary) {
-    throw new Error(`Unexpected Groq response shape: ${JSON.stringify(parsed).slice(0, 200)}`);
+    throw new Error(`Schema mismatch in advisory response: ${JSON.stringify(parsed).slice(0, 200)}`);
   }
 
   return parsed;

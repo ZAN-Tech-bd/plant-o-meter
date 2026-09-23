@@ -1,21 +1,17 @@
-// ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║              Plant-o-Meter  —  ESP32 Firmware                               ║
-// ║  Reads soil moisture, temperature (DS18B20), and estimated pH,              ║
-// ║  then POSTs JSON to the local Node.js server every 5 seconds.               ║
-// ╚══════════════════════════════════════════════════════════════════════════════╝
-//
-// LIBRARIES REQUIRED (install via Arduino Library Manager or PlatformIO):
-//   • OneWire            (Paul Stoffregen)   — for DS18B20 data bus
-//   • DallasTemperature  (Miles Burton)      — easy DS18B20 reading
-//   • WiFi               (built-in ESP32)
-//   • HTTPClient         (built-in ESP32)
-//   • ArduinoJson        (Benoit Blanchon) v6+
-//
-// WIRING SUMMARY:
-//   Capacitive Soil Moisture Sensor  →  GPIO34  (analog, 3.3 V)
-//   DS18B20 Temp Probe               →  GPIO4   (OneWire; 4.7 kΩ between DATA & 3.3 V)
-//   Analog pH Sensor (e.g. PH-4502C) →  GPIO35  (analog, 3.3 V)
-//   Onboard LED (built-in)           →  GPIO2   (LOW = on for most ESP32 dev boards)
+/**
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ZAN TECH · PLANT-O-METER™ ENTERPRISE AGRITECH IOT SUITE
+ * ESP32 Edge Station Micro-Controller Firmware
+ *
+ * Copyright (c) 2026 ZAN Tech. All Rights Reserved.
+ * Proprietary & Confidential — ZAN Tech Engineering Division
+ *
+ * SENSORY CHANNELS:
+ *   • Channel 1: Capacitive Volumetric Soil Moisture -> GPIO34 (ADC1_CH6)
+ *   • Channel 2: DS18B20 OneWire High-Precision Thermal Probe -> GPIO4
+ *   • Channel 3: Potentiometric Hydrogen-Ion (pH) Conditioning -> GPIO35 (ADC1_CH7)
+ * ══════════════════════════════════════════════════════════════════════════════
+ */
 
 #include <Arduino.h>
 #include <WiFi.h>

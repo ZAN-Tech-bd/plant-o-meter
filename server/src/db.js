@@ -1,8 +1,12 @@
-// ─── db.js ────────────────────────────────────────────────────────────────────
-// Sets up the SQLite database using @libsql/client (pure JavaScript, no
-// native build tools required — works on Windows without Visual Studio).
-//
-// We use the local file-based client so the database lives at server/plant-o-meter.db.
+/**
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ZAN TECH · PLANT-O-METER™ ENTERPRISE AGRITECH IOT SUITE
+ * Local Telemetry Database Layer (SQLite / LibSQL Engine)
+ *
+ * Copyright (c) 2026 ZAN Tech. All Rights Reserved.
+ * Proprietary & Confidential — ZAN Tech Engineering Division
+ * ══════════════════════════════════════════════════════════════════════════════
+ */
 
 import { createClient } from '@libsql/client';
 import { fileURLToPath } from 'url';

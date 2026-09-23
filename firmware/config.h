@@ -1,45 +1,52 @@
+/**
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ZAN TECH · PLANT-O-METER™ ENTERPRISE AGRITECH IOT SUITE
+ * Hardware Firmware Configuration Header
+ *
+ * Copyright (c) 2026 ZAN Tech. All Rights Reserved.
+ * Proprietary & Confidential — ZAN Tech Engineering Division
+ * ══════════════════════════════════════════════════════════════════════════════
+ */
+
 #ifndef CONFIG_H
 #define CONFIG_H
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 1. WiFi Network Settings (Must be 2.4 GHz WiFi — ESP32 does not support 5 GHz)
+// 1. IEEE 802.11 b/g/n (2.4 GHz) WiFi Infrastructure
 // ─────────────────────────────────────────────────────────────────────────────
-#define WIFI_SSID       "YOUR_WIFI_NAME"        // Name of your WiFi network
-#define WIFI_PASSWORD   "YOUR_WIFI_PASSWORD"    // Password of your WiFi network
+#define WIFI_SSID       "YOUR_WIFI_NETWORK"     // Target 2.4 GHz Access Point SSID
+#define WIFI_PASSWORD   "YOUR_WIFI_PASSWORD"    // WPA2/WPA3 Pre-Shared Key
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 2. Server Settings (Your Computer / Laptop running the server)
+// 2. Telemetry Ingestion Server (Edge Node / Host PC)
 // ─────────────────────────────────────────────────────────────────────────────
-// Find your laptop's IP address:
-// - Windows: Open Command Prompt, run "ipconfig" -> Look for IPv4 Address
-// - Mac / Linux: Open Terminal, run "ifconfig" or "ip a"
-#define SERVER_IP       "192.168.1.100"         // Example: 192.168.1.50
-#define SERVER_PORT     4000                    // Port of your Plant-o-Meter server
-#define DEVICE_ID       "esp32-01"              // Unique ID for this station
+#define SERVER_IP       "192.168.1.100"         // Host PC IPv4 Address
+#define SERVER_PORT     4000                    // Telemetry Ingestion HTTP Port
+#define DEVICE_ID       "esp32-01"              // Unique Edge Station Node Identifier
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. Sensor Update Timing
+// 3. Sensor Acquisition & Telemetry Transmit Interval
 // ─────────────────────────────────────────────────────────────────────────────
-#define READING_INTERVAL_MS  5000UL             // Send data every 5 seconds (5000 ms)
+#define READING_INTERVAL_MS  5000UL             // Periodic Transmission Cycle (ms)
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. Hardware Pin Mapping
+// 4. GPIO Pin Assignments (ADC1 & Bus Mapping)
 // ─────────────────────────────────────────────────────────────────────────────
-#define PIN_MOISTURE    34   // Capacitive soil moisture sensor (ADC1)
-#define PIN_ONEWIRE      4   // DS18B20 temperature probe data pin
-#define PIN_PH          35   // Analog pH sensor (PH-4502C) output pin (ADC1)
-#define PIN_LED          2   // Onboard indicator LED (blinks when data is sent)
+#define PIN_MOISTURE    34   // Capacitive Soil Moisture Analog Input (ADC1_CH6)
+#define PIN_ONEWIRE      4   // Dallas 1-Wire Digital Temperature Bus (GPIO4)
+#define PIN_PH          35   // Analog pH Sensor Signal Input (ADC1_CH7)
+#define PIN_LED          2   // Onboard Telemetry Activity LED Indicator
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 5. Calibration Constants
+// 5. Sensor Calibration Constants & Signal Processing
 // ─────────────────────────────────────────────────────────────────────────────
-// Soil Moisture Calibration (ADC 0-4095):
-#define MOISTURE_DRY   3200   // Reading in dry air
-#define MOISTURE_WET   1100   // Reading submerged in water
+// Capacitive Volumetric Soil Moisture Calibration (12-bit ADC: 0 - 4095)
+#define MOISTURE_DRY   3200   // Sensor ADC value in desiccated/air environment (0%)
+#define MOISTURE_WET   1100   // Sensor ADC value at complete water saturation (100%)
 
-// pH Sensor Two-Point Calibration:
-#define PH_CAL_ADC_7   1900   // Reading in pH 7.0 buffer solution
-#define PH_CAL_ADC_4   2400   // Reading in pH 4.0 buffer solution
-#define PH_SAMPLES     10     // Average 10 readings to smooth out noise
+// Two-Point Linear Chemical pH Calibration (PH-4502C Signal Conditioning)
+#define PH_CAL_ADC_7   1900   // Measured ADC response in Standard pH 7.00 Buffer
+#define PH_CAL_ADC_4   2400   // Measured ADC response in Standard pH 4.00 Buffer
+#define PH_SAMPLES     10     // Moving sample window size to suppress high-frequency noise
 
 #endif // CONFIG_H

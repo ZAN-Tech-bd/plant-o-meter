@@ -1,5 +1,12 @@
-// ─── routes/suggest-tree.js ───────────────────────────────────────────────────
-// Fastify route plugin: calls Groq AI and returns tree suggestions.
+/**
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ZAN TECH · PLANT-O-METER™ ENTERPRISE AGRITECH IOT SUITE
+ * AI Agronomic Decision Support & Agro-Forestry Recommendation Route
+ *
+ * Copyright (c) 2026 ZAN Tech. All Rights Reserved.
+ * Proprietary & Confidential — ZAN Tech Engineering Division
+ * ══════════════════════════════════════════════════════════════════════════════
+ */
 
 import { getLatestReading } from '../db.js';
 import { suggestTrees } from '../groq.js';

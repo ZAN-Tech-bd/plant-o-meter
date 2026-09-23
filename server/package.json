@@ -1,9 +1,11 @@
 {
-  "name": "plant-o-meter-server",
+  "name": "zan-tech-plant-o-meter-server",
   "version": "1.0.0",
-  "description": "Plant-o-Meter IoT backend — receives ESP32 sensor data and serves it to the dashboard",
+  "description": "ZAN Tech Plant-o-Meter™ — Industrial Agritech Telemetry Gateway & AI Decision Support System",
   "type": "module",
   "main": "src/index.js",
+  "author": "ZAN Tech <info@zantech.bd>",
+  "license": "Proprietary",
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js"

@@ -1,5 +1,12 @@
-// ─── routes/readings.js ───────────────────────────────────────────────────────
-// Fastify route plugin for sensor reading endpoints.
+/**
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ZAN TECH · PLANT-O-METER™ ENTERPRISE AGRITECH IOT SUITE
+ * Telemetry Ingestion & Real-Time Query API Routes
+ *
+ * Copyright (c) 2026 ZAN Tech. All Rights Reserved.
+ * Proprietary & Confidential — ZAN Tech Engineering Division
+ * ══════════════════════════════════════════════════════════════════════════════
+ */
 
 import { insertReading, getLatestReading, getHistory } from '../db.js';
 

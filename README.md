@@ -1,284 +1,253 @@
-# 🌱 Plant-o-Meter — Kids' IoT Showcase
+# Plant-o-Meter™ — Industrial Agritech Telemetry & AI Decision Suite
+### Proprietary Telemetry Platform Developed by ZAN Tech
 
-> **An interactive IoT soil station that reads soil sensors, displays live gauges on a web admin panel, and asks AI to recommend the best trees to plant in Bangladesh!**
-
-Designed especially for school science fairs, exhibitions, and classroom demonstrations.
-
----
-
-## 🏗️ Architecture (All-in-One Server)
-
-```
-┌───────────────────────┐
-│     ESP32 Board       │
-│                       │
-│  💧 Soil Moisture     │         WiFi HTTP POST (Every 5s)
-│  🌡️ DS18B20 Temp      │ ───────────────────────────────────────────┐
-│  🧪 pH Sensor Module  │    { moisture, temperature, ph }           │
-└───────────────────────┘                                            │
-                                                                     ▼
-                                                      ┌──────────────────────────────┐
-                                                      │  Node.js Server (:4000)      │
-                                                      │  ──────────────────────────  │
-                                                      │  • Fastify API Engine        │
-                                                      │  • Local SQLite Database     │
-                                                      │  • Built-in Web Admin Panel  │
-                                                      └──────────────┬───────────────┘
-                                                                     │
-                                      ┌──────────────────────────────┴──────────────────────────────┐
-                                      ▼                                                             ▼
-                       ┌──────────────────────────────┐                              ┌──────────────────────────────┐
-                       │  Live Admin Web Panel        │   Click "Suggest a Tree"     │  Groq Cloud AI (Free)        │
-                       │  http://localhost:4000       │ ───────────────────────────► │  llama-3.1-8b-instant        │
-                       │  • Real-time Animated Gauges │ ◄─────────────────────────── │  Kid-friendly recommendations│
-                       │  • Historical Trend Charts   │     JSON Tree Suggestions    └──────────────────────────────┘
-                       └──────────────────────────────┘
-```
+**Copyright © 2026 ZAN Tech. All Rights Reserved.**  
+*Confidential & Proprietary — Developed by the Agritech & IoT Engineering Division at ZAN Tech.*
 
 ---
 
-## 🗂️ Project Directory Structure
+## 1. Executive Overview
+
+**Plant-o-Meter™** is an industrial-grade IoT telemetry acquisition platform and agronomic advisory system engineered by **ZAN Tech**. The system integrates edge sensory hardware (ESP32) with a high-throughput Node.js/Fastify edge telemetry gateway and an autonomous agronomic decision support engine powered by Groq Llama-3.1 inference.
+
+The platform provides continuous physicochemical characterization of agricultural soils, real-time time-series telemetry trends, and automated agro-ecological species suitability matching tailored specifically to Bangladesh agrarian regions.
+
+```
+┌─────────────────────────────────┐
+│     ESP32 Edge Microstation     │
+│                                 │
+│  • Volumetric Soil Moisture     │          WiFi HTTP/1.1 REST (5000ms Cycle)
+│  • High-Precision Temp (DS18B20)│ ──────────────────────────────────────────────────┐
+│  • Potentiometric pH (PH-4502C) │       Payload: { deviceId, moisture, temp, ph }   │
+└─────────────────────────────────┘                                                   │
+                                                                                      ▼
+                                                                     ┌─────────────────────────────────┐
+                                                                     │   ZAN Tech Telemetry Gateway    │
+                                                                     │   Port :4000 (Fastify Engine)   │
+                                                                     │   ───────────────────────────   │
+                                                                     │   • High-Performance Ingestion  │
+                                                                     │   • Embedded SQLite Database    │
+                                                                     │   • Industrial Web Admin Panel  │
+                                                                     └────────────────┬────────────────┘
+                                                                                      │
+                                      ┌───────────────────────────────────────────────┴───────────────────────────────────────────────┐
+                                      ▼                                                                                               ▼
+                       ┌─────────────────────────────┐                                                                 ┌─────────────────────────────┐
+                       │ Enterprise Web Admin Panel  │                 Autonomous Agronomic Advisory                   │  Groq Cloud Inference Engine│
+                       │ http://localhost:4000       │ ──────────────────────────────────────────────────────────────► │  Model: llama-3.1-8b-instant│
+                       │ • Multi-Channel Live Metrics│ ◄────────────────────────────────────────────────────────────── │  Agro-Ecological Suitability│
+                       │ • Temporal Trend Analytics  │                    Structured JSON Response                     └─────────────────────────────┘
+                       │ • Telemetry CSV Data Export │
+                       └─────────────────────────────┘
+```
+
+---
+
+## 2. System Architecture & Directory Tree
 
 ```
 plant-o-meter/
 ├── firmware/
-│   ├── config.h               ← ⚙️ Put your WiFi Name, Password & Server IP here!
-│   └── plant-o-meter.ino      ← 📟 ESP32 Arduino C++ firmware
+│   ├── config.h               # Hardware pinouts, calibration constants, WiFi & server IP settings
+│   └── plant-o-meter.ino      # ESP32 C++ edge firmware (ADC sampling, OneWire bus, HTTP client)
 ├── server/
 │   ├── public/
-│   │   └── index.html         ← 💻 Built-in Admin Panel Web Dashboard
+│   │   └── index.html         # Industrial dark-theme admin dashboard (HTML5, SVG, Chart.js)
 │   ├── src/
-│   │   ├── index.js           ← 🚀 Fastify Server & Static File Server
-│   │   ├── db.js              ← 🗄️ SQLite database (pure JS via @libsql/client)
-│   │   ├── groq.js            ← 🤖 Groq AI tree suggestion client
+│   │   ├── index.js           # Fastify server bootstrap & static file routing
+│   │   ├── db.js              # SQLite database layer with prepared queries
+│   │   ├── groq.js            # Groq Cloud AI agronomic recommendation client
 │   │   └── routes/
-│   │       ├── readings.js    ← 📡 Sensor POST & GET endpoints
-│   │       └── suggest-tree.js← 🌳 AI tree suggestion endpoint
-│   ├── .env.example           ← 🔑 Sample environment file
-│   └── package.json           ← 📦 Server dependencies & scripts
+│   │       ├── readings.js    # Telemetry ingestion POST & historical query GET endpoints
+│   │       └── suggest-tree.js# AI agronomic advisory endpoint
+│   ├── .env.example           # Server environment variable template
+│   └── package.json           # Gateway dependencies and runtime scripts
+├── LICENSE                    # Proprietary Software License — ZAN Tech (All Rights Reserved)
 ├── .gitignore
-└── README.md                  ← 📖 You are here!
+└── README.md                  # Comprehensive Technical Specification & Operations Manual
 ```
 
 ---
 
-## 🔌 Circuit & Wiring Diagram (Kid-Friendly)
+## 3. Hardware Schematic & Pinout Matrix
 
-> ⚠️ **Safety Tip:** Always connect wires while your ESP32 is unplugged from the computer!  
-> The ESP32 analog pins can only take **up to 3.3V**. Never connect 5V directly to GPIO34 or GPIO35!
+### Pin Assignment Specification
 
-### 📋 Wiring Reference Table
-
-| Sensor | Sensor Pin | ESP32 Pin | Wire Color (Typical) | Why & Notes |
-|---|---|---|---|---|
-| **💧 Capacitive Soil Moisture** | VCC | **3.3V** | Red | Powers the capacitive sensor safely |
-| | GND | **GND** | Black | Ground connection |
-| | AOUT | **GPIO 34** | Yellow / Green | Analog input (ADC1 — works with WiFi) |
-| **🌡️ DS18B20 Temp Probe** | VCC | **3.3V** | Red | Power line |
-| | GND | **GND** | Black | Ground |
-| | DATA | **GPIO 4** | Yellow / White | Digital OneWire data (**Needs 4.7kΩ pull-up!**) |
-| **🧪 pH Sensor Module (PH-4502C)**| VCC | **5V (VIN)** | Red | Op-Amp board needs 5V to power properly |
-| | GND | **GND** | Black | Ground |
-| | PO (Analog Out)| **GPIO 35** | Yellow / Blue | Analog voltage representing pH (ADC1) |
+| Sensory Subsystem | Sensor Pin | ESP32 Pin | Interface Type | Operating Voltage | Engineering Notes |
+|---|---|---|---|---|---|
+| **Volumetric Soil Moisture** | VCC | **3.3V** | Power | 3.3V DC | Capacitive plate; corrosion-resistant |
+| | GND | **GND** | Ground | 0V | System common ground |
+| | AOUT | **GPIO 34** | Analog Input | 0 – 3.3V | Dedicated ADC1 channel 6 |
+| **Sub-Surface Temperature** | VCC | **3.3V** | Power | 3.3V DC | Waterproof probe assembly |
+| | GND | **GND** | Ground | 0V | System common ground |
+| | DATA | **GPIO 4** | 1-Wire Digital | 3.3V Logic | **Mandatory 4.7 kΩ pull-up to 3.3V** |
+| **Potentiometric pH Unit** | VCC | **5V (VIN)** | Power | 5.0V DC | Instrumentation amplifier supply |
+| | GND | **GND** | Ground | 0V | System common ground |
+| | PO (Analog) | **GPIO 35** | Analog Input | 0 – 3.3V | Dedicated ADC1 channel 7 |
 
 ---
 
-### 🎨 Visual ASCII Circuit Diagram
+### Engineering Circuit Diagram
 
 ```
                               ┌─────────────────────────────┐
                               │       ESP32 Dev Board       │
                               │                             │
-    💧 SOIL MOISTURE          │ 3.3V  ●────────────────┐    │
+    SOIL MOISTURE TRANSDUCER  │ 3.3V  ●────────────────┐    │
     ┌─────────────────┐       │                        │    │
-    │  VCC (Red)      ├───────┤ 3.3V                   │    │
-    │  GND (Black)    ├───────┤ GND                    │    │
-    │  AOUT (Yellow)  ├───────┤ GPIO 34 (ADC1_CH6)     │    │
+    │  VCC (Power)    ├───────┤ 3.3V                   │    │
+    │  GND (Ground)   ├───────┤ GND                    │    │
+    │  AOUT (Signal)  ├───────┤ GPIO 34 (ADC1_CH6)     │    │
     └─────────────────┘       │                        │    │
                               │                        │    │
-    🌡️ DS18B20 TEMP           │                        │    │
+    DS18B20 THERMAL PROBE     │                        │    │
     ┌─────────────────┐       │                        │    │
-    │  VCC (Red)      ├───────┤ 3.3V                   │    │
-    │  GND (Black)    ├───────┤ GND                    │    │
+    │  VCC (Power)    ├───────┤ 3.3V                   │    │
+    │  GND (Ground)   ├───────┤ GND                    │    │
     │                 │       │               [4.7kΩ]  │    │
-    │  DATA (Yellow)  ├───┬───┤ GPIO 4 ───────█───────┘    │
-    └─────────────────┘   │   │  (Resistor connects         │
-                          │   │   DATA to 3.3V!)            │
+    │  DATA (Signal)  ├───┬───┤ GPIO 4 ───────■───────┘    │
+    └─────────────────┘   │   │  (4.7kΩ pull-up to          │
+                          │   │   3.3V line)                │
                           │   │                             │
-    🧪 pH SENSOR (PH-4502C)   │                             │
+    PH-4502C CONDITIONER UNIT │                             │
     ┌─────────────────┐       │                             │
-    │  VCC (Red)      ├───────┤ 5V (VIN)                    │
-    │  GND (Black)    ├───────┤ GND                         │
-    │  PO / Vout      ├───────┤ GPIO 35 (ADC1_CH7)          │
+    │  VCC (Power)    ├───────┤ 5V (VIN Rail)               │
+    │  GND (Ground)   ├───────┤ GND                         │
+    │  PO (Analog)    ├───────┤ GPIO 35 (ADC1_CH7)          │
     └─────────────────┘       │                             │
                               └─────────────────────────────┘
-
-    Color Code Guide:
-    🔴 Red    = Power (+3.3V or +5V)
-    ⚫ Black  = Ground (GND)
-    🟡 Yellow = Signal / Data
-    🟦 4.7kΩ  = Pull-up resistor for DS18B20 temperature probe
 ```
 
 ---
 
-## ⚙️ Step 1: Configure & Flash the ESP32
+## 4. Firmware Configuration & Flashing
 
-### A. Install Arduino IDE
-1. Download and install [Arduino IDE 2.x](https://www.arduino.cc/en/software).
-2. Open **File → Preferences** in Arduino IDE.
-3. In **Additional boards manager URLs**, add:
+### 4.1 Prerequisites
+1. Install **Arduino IDE v2.x** or **VS Code with PlatformIO**.
+2. Add the ESP32 board manager package:
    ```
    https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
    ```
-4. Open **Tools → Board → Boards Manager**, search for `esp32`, and click **Install**.
+3. Install the required C++ driver libraries via the Library Manager:
+   - `OneWire` (by Paul Stoffregen)
+   - `DallasTemperature` (by Miles Burton)
+   - `ArduinoJson` (v6 or v7 by Benoit Blanchon)
 
-### B. Install Required Libraries
-Open **Tools → Manage Libraries** (`Ctrl+Shift+I` on Windows) and install:
-1. `OneWire` (by Paul Stoffregen)
-2. `DallasTemperature` (by Miles Burton)
-3. `ArduinoJson` (by Benoit Blanchon — version 6 or 7)
-
-### C. Edit `firmware/config.h`
-Open `firmware/config.h` in any text editor or Arduino IDE:
+### 4.2 Network & Edge Station Settings
+Open `firmware/config.h` and configure your target network credentials:
 
 ```cpp
-// 1. Your 2.4 GHz WiFi credentials:
-#define WIFI_SSID       "MyHomeWiFi"
-#define WIFI_PASSWORD   "SecretPassword123"
+// 1. IEEE 802.11 b/g/n (2.4 GHz) WiFi Infrastructure
+#define WIFI_SSID       "YOUR_OFFICE_OR_FIELD_WIFI"
+#define WIFI_PASSWORD   "YOUR_WPA2_PASSWORD"
 
-// 2. Your computer's local IP address:
-#define SERVER_IP       "192.168.1.100"   // <-- Set your laptop's IP!
+// 2. Telemetry Ingestion Server IP & Port
+#define SERVER_IP       "192.168.1.100"    // Host workstation / gateway IP address
 #define SERVER_PORT     4000
+#define DEVICE_ID       "esp32-01"
 ```
 
-> 🔍 **How to find your Laptop's IP address:**
-> - **Windows:** Open Command Prompt or PowerShell, type `ipconfig`, find `IPv4 Address` (e.g. `192.168.1.100`).
-> - **Mac / Linux:** Open Terminal, type `ifconfig` or `ip a`.
-
-### D. Upload Code to ESP32
-1. Plug your ESP32 board into your laptop using a micro-USB or USB-C cable.
-2. In Arduino IDE, click **File → Open** and choose `firmware/plant-o-meter.ino`.
-3. Select your board: **Tools → Board → esp32 → ESP32 Dev Module**.
-4. Select your COM Port: **Tools → Port → COM...** (e.g. COM3 or COM4).
-5. Click the **Upload (➡️)** button.
-6. Open **Tools → Serial Monitor** and set baud rate to **115200**.
-7. You should see:
-   ```
-   [WiFi] Connected! IP = 192.168.1.120
-   ─── Reading sensors ─────────────────────────
-     Moisture    : 62.4 %
-     Temperature : 28.1 °C
-     pH (est.)   : 6.85
-   ─── [HTTP] ✓ Server replied 201 ─────────────
-   ```
+### 4.3 Flashing the Microcontroller
+1. Connect the ESP32 via USB.
+2. Select **Board: ESP32 Dev Module**.
+3. Select the appropriate **COM Port** (e.g. `COM3` on Windows, `/dev/ttyUSB0` on Linux).
+4. Click **Upload** (`Ctrl+U`).
+5. Open the Serial Monitor at **115200 Baud** to verify initialization.
 
 ---
 
-## 💻 Step 2: Run the Server & Admin Panel
+## 5. Telemetry Server Deployment
 
-You only need **Node.js (v18+)** installed. The server hosts both the REST API and the live Web Admin Panel!
+### 5.1 Environment Configuration
+1. Navigate to the `server/` directory:
+   ```bash
+   cd server
+   ```
+2. Install production dependencies:
+   ```bash
+   npm install
+   ```
+3. Create your `.env` configuration file from the template:
+   ```powershell
+   Copy-Item .env.example .env     # Windows
+   cp .env.example .env            # Linux / macOS
+   ```
+4. Configure your Groq API credentials in `.env`:
+   ```env
+   PORT=4000
+   GROQ_API_KEY=gsk_your_groq_api_key_here
+   ```
 
-### 1. Install Dependencies
-```bash
-cd server
-npm install
-```
-
-### 2. Configure Environment Variables
-Copy `.env.example` to `.env`:
-
-**Windows (PowerShell):**
-```powershell
-Copy-Item .env.example .env
-```
-**Mac / Linux:**
-```bash
-cp .env.example .env
-```
-
-Open `.env` and add your free Groq API key:
-```env
-PORT=4000
-GROQ_API_KEY=gsk_your_free_groq_api_key_here
-```
-
-> 🎁 **Get a Free Groq API Key:**
-> 1. Go to [https://console.groq.com/keys](https://console.groq.com/keys).
-> 2. Sign up with Google or GitHub (100% free, no credit card required).
-> 3. Click **Create API Key**, copy it, and paste it into `.env`.
-
-### 3. Start the Server
+### 5.2 Server Execution
+Start the production server:
 ```bash
 npm start
 ```
-*(or `npm run dev` for automatic reloading)*
+For continuous development mode with automatic reloading:
+```bash
+npm run dev
+```
 
-### 4. Open the Admin Panel
-Open your browser and navigate to:
-👉 **[http://localhost:4000](http://localhost:4000)**
+The gateway console will output:
+```
+🌱 Plant-o-Meter All-in-One Server running!
+   Admin Panel Dashboard : http://localhost:4000
+   Health check          : http://localhost:4000/health
+   Latest reading API    : http://localhost:4000/api/readings/latest
+```
 
-You will see:
-- 💧 **Live Soil Moisture Gauge** (%) with color alerts
-- 🌡️ **Soil Temperature Gauge** (°C)
-- 🧪 **Estimated pH Gauge**
-- 📈 **Real-Time Interactive History Trend Chart**
-- 🌳 **"Suggest a Tree!" Button**: Uses Groq AI to suggest Bangladesh-native trees (Mango, Neem, Jackfruit, Guava, etc.) matching your exact soil!
-- 🧪 **"Test Sim" Button**: Click anytime to generate test readings even before your hardware is plugged in!
-
----
-
-## 🎛️ Sensor Calibration Guide
-
-### 1. 💧 Soil Moisture Sensor Calibration
-Capacitive soil moisture sensors give raw ADC values (typically between 1000 and 3500):
-1. Keep sensor in **dry air** → open Serial Monitor → note raw ADC value (e.g. `3200`).
-2. Dip the sensor tip into a glass of **water** (do NOT submerge the electronics!) → note raw ADC (e.g. `1100`).
-3. In `firmware/config.h`, set:
-   ```cpp
-   #define MOISTURE_DRY   3200   // Reading in dry air (0% moisture)
-   #define MOISTURE_WET   1100   // Reading in water (100% moisture)
-   ```
-
-### 2. 🧪 pH Sensor Calibration (Two-Point Linear Calibration)
-Analog pH sensors (PH-4502C) drift and are noisy. The firmware automatically **averages 10 samples** to provide a stable estimate.
-1. Dip probe in **pH 7.0 buffer solution** → note raw ADC from Serial Monitor (e.g. `1900`).
-2. Dip probe in **pH 4.0 buffer solution** → note raw ADC (e.g. `2400`).
-3. In `firmware/config.h`, set:
-   ```cpp
-   #define PH_CAL_ADC_7   1900   // Reading at pH 7.0
-   #define PH_CAL_ADC_4   2400   // Reading at pH 4.0
-   ```
+Open your browser at **`http://localhost:4000`** to access the industrial telemetry console.
 
 ---
 
-## 🛠️ API Reference
+## 6. Industrial Admin Dashboard Capabilities
 
-The server exposes simple REST endpoints:
+The integrated web dashboard provides real-time situational awareness:
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/` | Serves the interactive Admin Panel Web UI |
-| `GET` | `/health` | Server health check (`{"status":"ok"}`) |
-| `POST` | `/api/readings` | ESP32 posts JSON payload with `{ moisture, temperature, ph, deviceId }` |
-| `GET` | `/api/readings/latest` | Returns latest sensor reading from SQLite |
-| `GET` | `/api/readings/history?limit=30` | Returns recent sensor readings for charting |
-| `POST` | `/api/suggest-tree` | Calls Groq AI with soil parameters & returns recommended trees |
-
----
-
-## ❓ Frequently Asked Questions (FAQ)
-
-**Q: Can I use this without sensors connected?**  
-**A:** Yes! Open `http://localhost:4000` and click the **"🧪 Test Sim"** button in the top right. It will immediately generate test soil data and update all gauges and charts.
-
-**Q: Why does the ESP32 fail to connect to WiFi?**  
-**A:** ESP32 only supports **2.4 GHz WiFi**. If your router has both 5 GHz and 2.4 GHz, make sure to connect to the 2.4 GHz network name.
-
-**Q: The ESP32 says `Server replied 404` or connection refused?**  
-**A:** Make sure `SERVER_IP` in `firmware/config.h` matches your laptop's current IP address, and both the laptop and ESP32 are connected to the same WiFi network.
+- **Volumetric Water Content (% VWC)**: Calibrated moisture gauge with optimal/warning threshold detection.
+- **Sub-Surface Thermal Metric (°C)**: High-resolution OneWire temperature monitoring.
+- **Physicochemical Reaction (pH)**: Real-time hydrogen-ion measurement with buffer categorization.
+- **Time-Series Telemetry Trends**: Interactive multi-channel Chart.js visualization with channel filtering (All, Moisture, Temperature, pH).
+- **AI Agronomic Decision Support**: Autonomous evaluation of real-time telemetry against Bangladesh agricultural zones to recommend optimal perennial cultivars with scientific classification and suitability scoring.
+- **Telemetry Ingestion Injection (Sim)**: Built-in hardware simulation engine for testing and demonstrations.
+- **CSV Data Export**: One-click raw telemetry export for field agronomists and laboratory analysis.
 
 ---
 
-## 📜 License
-MIT License · Created for STEM education and young innovators! 🌱
+## 7. Sensor Calibration Protocols
+
+### 7.1 Capacitive Volumetric Soil Moisture Calibration
+1. Record raw ADC response in dry ambient air → Update `MOISTURE_DRY` in `firmware/config.h` (nominal: `3200`).
+2. Record raw ADC response with sensor immersed in water up to limit line → Update `MOISTURE_WET` in `firmware/config.h` (nominal: `1100`).
+
+### 7.2 Chemical pH Unit Two-Point Calibration
+1. Immerse clean electrode in standard **pH 7.00 Buffer Solution** → Record ADC reading → Update `PH_CAL_ADC_7` in `firmware/config.h` (nominal: `1900`).
+2. Immerse clean electrode in standard **pH 4.00 Buffer Solution** → Record ADC reading → Update `PH_CAL_ADC_4` in `firmware/config.h` (nominal: `2400`).
+
+---
+
+## 8. REST Telemetry API Specification
+
+| HTTP Method | Resource Route | Description | Payload / Response |
+|---|---|---|---|
+| `GET` | `/` | Renders the Industrial Admin Dashboard | HTML5 / CSS3 / JavaScript |
+| `GET` | `/health` | Gateway Liveness & Health Probe | `{"status":"ok","time":"..."}` |
+| `POST` | `/api/readings` | Edge Station Telemetry Ingestion | Body: `{ deviceId, moisture, temperature, ph }` |
+| `GET` | `/api/readings/latest` | Query Most Recent Telemetry Packet | `{"id":..., "moisture":..., "temperature":..., "ph":...}` |
+| `GET` | `/api/readings/history` | Historical Ingestion Stream (`?limit=50`) | Array of timestamped sensor packets |
+| `POST` | `/api/suggest-tree` | AI Agronomic Decision Inference | Returns `{ trees: [...], summary: "..." }` |
+
+---
+
+## 9. Intellectual Property & License Notice
+
+```
+Copyright (c) 2026 ZAN Tech. All Rights Reserved.
+Proprietary and Confidential.
+```
+
+This software, edge firmware, hardware architectural schematics, and UI/UX designs are proprietary works created and exclusively reserved by **ZAN Tech**. Unauthorized copying, reverse engineering, redistribution, or commercial use is strictly prohibited without prior written authorization from ZAN Tech.
+
+For licensing inquiries or commercial integrations, contact:  
+**ZAN Tech · Agritech & IoT Engineering Division**  
+Email: [info@zantech.bd](mailto:info@zantech.bd) · Dhaka, Bangladesh
