@@ -24,53 +24,7 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  USER CONFIGURATION — edit these before flashing
-// ─────────────────────────────────────────────────────────────────────────────
-#define WIFI_SSID       "YOUR_WIFI_SSID"
-#define WIFI_PASSWORD   "YOUR_WIFI_PASSWORD"
-
-// Replace with the local IP of the laptop running the Node.js server.
-// Find it with:  ipconfig  (Windows) or  ifconfig  (Mac/Linux)
-#define SERVER_IP       "192.168.1.100"
-#define SERVER_PORT     4000
-#define DEVICE_ID       "esp32-01"
-
-// How often to take a reading and POST it (milliseconds)
-#define READING_INTERVAL_MS  5000UL
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  PIN ASSIGNMENTS
-// ─────────────────────────────────────────────────────────────────────────────
-#define PIN_MOISTURE    34   // Capacitive soil moisture (analog, ADC1)
-#define PIN_ONEWIRE      4   // DS18B20 data (OneWire)
-#define PIN_PH          35   // Analog pH sensor output (ADC1)
-#define PIN_LED          2   // Onboard LED
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  MOISTURE SENSOR CALIBRATION
-//  1. Put the sensor completely in DRY AIR  → read Serial, set MOISTURE_DRY
-//  2. Submerge the sensor tip in water     → read Serial, set MOISTURE_WET
-// ─────────────────────────────────────────────────────────────────────────────
-#define MOISTURE_DRY   3200   // ADC value when sensor is in dry air
-#define MOISTURE_WET   1100   // ADC value when sensor is in water
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  pH SENSOR CALIBRATION  (linear voltage → pH mapping)
-//  The PH-4502C and similar modules output roughly:
-//    pH 7  → 2.5 V    pH 4  → ~3.0 V    pH 10 → ~2.0 V  (varies by module)
-//  Steps:
-//    1. Dip in pH 7 buffer, note the raw ADC → set PH_CAL_ADC_7
-//    2. Dip in pH 4 buffer, note the raw ADC → set PH_CAL_ADC_4
-//  A two-point linear fit is then computed automatically.
-//  For a quick demo without calibration, the defaults give a rough estimate.
-// ─────────────────────────────────────────────────────────────────────────────
-#define PH_CAL_ADC_7   1900   // ADC reading at pH 7.0  (3.3 V range, 12-bit)
-#define PH_CAL_ADC_4   2400   // ADC reading at pH 4.0
-//
-// Two-point formula:  pH = 7.0 + (adcAt7 - adc) * (7.0 - 4.0) / (adcAt7 - adcAt4)
-// Averaged over PH_SAMPLES readings to reduce noise.
-#define PH_SAMPLES     10
+#include "config.h"
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  INTERNALS — no need to edit below here

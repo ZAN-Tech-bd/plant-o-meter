@@ -1,18 +1,21 @@
 // ─── index.js ─────────────────────────────────────────────────────────────────
-// Plant-o-Meter backend entry point.
-// Fastify + libsql SQLite — no cloud dependencies except the Groq API call.
+// Plant-o-Meter backend & admin panel entry point.
+// Fastify + libsql SQLite + static Admin UI — no cloud dependencies except Groq API.
 
 import 'dotenv/config';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import fastifyStatic from '@fastify/static';
 
 import { initDb } from './db.js';
-import readingsRoutes    from './routes/readings.js';
+import readingsRoutes from './routes/readings.js';
 import suggestTreeRoutes from './routes/suggest-tree.js';
 
-const PORT   = Number(process.env.PORT ?? 4000);
-const HOST   = process.env.HOST ?? '0.0.0.0';   // listen on all interfaces so ESP32 can reach us
-const ORIGIN = process.env.DASHBOARD_ORIGIN ?? 'http://localhost:3000';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PORT = Number(process.env.PORT ?? 4000);
+const HOST = process.env.HOST ?? '0.0.0.0'; // listen on all network interfaces
 
 // ─── Build Fastify app ────────────────────────────────────────────────────────
 const fastify = Fastify({
@@ -30,8 +33,19 @@ const fastify = Fastify({
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 await fastify.register(cors, {
-  origin: [ORIGIN, /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/],   // dashboard + any LAN IP
+  origin: true, // allow any local web client
   methods: ['GET', 'POST', 'OPTIONS'],
+});
+
+// ─── Static files for Admin Panel ─────────────────────────────────────────────
+await fastify.register(fastifyStatic, {
+  root: path.join(__dirname, '..', 'public'),
+  prefix: '/',
+});
+
+// Redirect /admin to /
+fastify.get('/admin', async (_req, reply) => {
+  return reply.redirect('/');
 });
 
 // ─── Health check ─────────────────────────────────────────────────────────────
@@ -50,10 +64,10 @@ try {
   await initDb();
   await fastify.listen({ port: PORT, host: HOST });
 
-  console.log(`\n🌱 Plant-o-Meter server running at http://localhost:${PORT}`);
-  console.log(`   Dashboard CORS origin : ${ORIGIN}`);
+  console.log(`\n🌱 Plant-o-Meter All-in-One Server running!`);
+  console.log(`   Admin Panel Dashboard : http://localhost:${PORT}`);
   console.log(`   Health check          : http://localhost:${PORT}/health`);
-  console.log(`   Latest reading        : http://localhost:${PORT}/api/readings/latest\n`);
+  console.log(`   Latest reading API    : http://localhost:${PORT}/api/readings/latest\n`);
 } catch (err) {
   fastify.log.error(err);
   process.exit(1);

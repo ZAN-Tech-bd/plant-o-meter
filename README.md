@@ -1,463 +1,284 @@
-# 🌱 Plant-o-Meter
+# 🌱 Plant-o-Meter — Kids' IoT Showcase
 
-> **An IoT soil-monitoring station that tells you which trees to plant — powered by an ESP32, a Node.js server, and AI!**
+> **An interactive IoT soil station that reads soil sensors, displays live gauges on a web admin panel, and asks AI to recommend the best trees to plant in Bangladesh!**
 
-Built for school fairs and science showcases. Three sensors plug into an ESP32 microcontroller, which sends live soil data to a laptop server. A colourful dashboard shows the readings in real time, and a single button asks an AI to suggest the best trees to grow in that exact soil — explained in kid-friendly language.
-
----
-
-## 📺 What It Looks Like
-
-```
-┌─────────────────────────────────────────────────────────┐
-│              🌱  Plant-o-Meter  Dashboard                │
-│                                                          │
-│   💧 Moisture      🌡️ Temperature      🧪 pH (est.)      │
-│   ┌──────────┐    ┌──────────┐    ┌──────────┐          │
-│   │   72 %   │    │  28.4 °C │    │   6.8    │          │
-│   │ ████████ │    │ ████████ │    │ ████████ │          │
-│   └──────────┘    └──────────┘    └──────────┘          │
-│                                                          │
-│   [📈 Line charts — last 50 readings per sensor]         │
-│                                                          │
-│        ┌────────────────────────────────┐               │
-│        │  🌳  Suggest a Tree  →         │               │
-│        └────────────────────────────────┘               │
-│                                                          │
-│   🌴 Coconut Palm  —  "Loves moist, warm soil!"          │
-│   🌿 Bamboo        —  "Super fast grower in wet ground!" │
-│   🌳 Mango Tree    —  "Thrives in this perfect pH!"      │
-└─────────────────────────────────────────────────────────┘
-```
+Designed especially for school science fairs, exhibitions, and classroom demonstrations.
 
 ---
 
-## 🗂️ Project Structure
+## 🏗️ Architecture (All-in-One Server)
+
+```
+┌───────────────────────┐
+│     ESP32 Board       │
+│                       │
+│  💧 Soil Moisture     │         WiFi HTTP POST (Every 5s)
+│  🌡️ DS18B20 Temp      │ ───────────────────────────────────────────┐
+│  🧪 pH Sensor Module  │    { moisture, temperature, ph }           │
+└───────────────────────┘                                            │
+                                                                     ▼
+                                                      ┌──────────────────────────────┐
+                                                      │  Node.js Server (:4000)      │
+                                                      │  ──────────────────────────  │
+                                                      │  • Fastify API Engine        │
+                                                      │  • Local SQLite Database     │
+                                                      │  • Built-in Web Admin Panel  │
+                                                      └──────────────┬───────────────┘
+                                                                     │
+                                      ┌──────────────────────────────┴──────────────────────────────┐
+                                      ▼                                                             ▼
+                       ┌──────────────────────────────┐                              ┌──────────────────────────────┐
+                       │  Live Admin Web Panel        │   Click "Suggest a Tree"     │  Groq Cloud AI (Free)        │
+                       │  http://localhost:4000       │ ───────────────────────────► │  llama-3.1-8b-instant        │
+                       │  • Real-time Animated Gauges │ ◄─────────────────────────── │  Kid-friendly recommendations│
+                       │  • Historical Trend Charts   │     JSON Tree Suggestions    └──────────────────────────────┘
+                       └──────────────────────────────┘
+```
+
+---
+
+## 🗂️ Project Directory Structure
 
 ```
 plant-o-meter/
 ├── firmware/
-│   └── plant-o-meter.ino        ← ESP32 Arduino sketch
+│   ├── config.h               ← ⚙️ Put your WiFi Name, Password & Server IP here!
+│   └── plant-o-meter.ino      ← 📟 ESP32 Arduino C++ firmware
 ├── server/
+│   ├── public/
+│   │   └── index.html         ← 💻 Built-in Admin Panel Web Dashboard
 │   ├── src/
-│   │   ├── index.js             ← Fastify server entry point
-│   │   ├── db.js                ← SQLite setup & queries
-│   │   ├── groq.js              ← Groq AI client
+│   │   ├── index.js           ← 🚀 Fastify Server & Static File Server
+│   │   ├── db.js              ← 🗄️ SQLite database (pure JS via @libsql/client)
+│   │   ├── groq.js            ← 🤖 Groq AI tree suggestion client
 │   │   └── routes/
-│   │       ├── readings.js      ← POST/GET sensor data
-│   │       └── suggest-tree.js  ← POST AI suggestions
-│   ├── .env.example             ← Copy this to .env
-│   └── package.json
-├── dashboard/                   ← Next.js React dashboard
-│   ├── app/
-│   │   ├── page.tsx             ← Main dashboard page
-│   │   ├── layout.tsx
-│   │   └── globals.css
-│   └── package.json
-└── README.md                    ← You are here! 👋
+│   │       ├── readings.js    ← 📡 Sensor POST & GET endpoints
+│   │       └── suggest-tree.js← 🌳 AI tree suggestion endpoint
+│   ├── .env.example           ← 🔑 Sample environment file
+│   └── package.json           ← 📦 Server dependencies & scripts
+├── .gitignore
+└── README.md                  ← 📖 You are here!
 ```
 
 ---
 
-## 🔌 Circuit Diagram
+## 🔌 Circuit & Wiring Diagram (Kid-Friendly)
 
-> Connect everything **before** powering the ESP32.  
-> Always use **3.3 V** for sensors, never 5 V (the ESP32 ADC pins are 3.3 V only).
+> ⚠️ **Safety Tip:** Always connect wires while your ESP32 is unplugged from the computer!  
+> The ESP32 analog pins can only take **up to 3.3V**. Never connect 5V directly to GPIO34 or GPIO35!
 
-### Pinout Table
+### 📋 Wiring Reference Table
 
-| Sensor | Wire | ESP32 Pin | Notes |
-|--------|------|-----------|-------|
-| Capacitive Soil Moisture | VCC (Red) | **3.3V** | Do NOT use 5V — you'll damage the pin |
-| | GND (Black) | **GND** | |
-| | AOUT (Yellow) | **GPIO 34** | Analog-only pin, perfect for ADC |
-| DS18B20 Temp Probe | VCC (Red) | **3.3V** | |
-| | GND (Black) | **GND** | |
-| | DATA (Yellow) | **GPIO 4** | ⚠️ Needs a 4.7 kΩ pull-up resistor! |
-| Analog pH Sensor | VCC (Red) | **5V** (VIN) | The PH-4502C needs 5V for its op-amp |
-| | GND (Black) | **GND** | |
-| | PO / Vout (Yellow) | **GPIO 35** | Analog output — average 10 readings |
-
-### Wiring Diagram (ASCII)
-
-```
-                        ┌──────────────────────────────┐
-                        │         ESP32 Dev Board       │
-                        │                               │
-  ┌──────────────┐      │  3.3V ●───────────┐           │
-  │   Capacitive │      │                   │           │
-  │  Soil Sensor │      │  GND  ●───┐       │           │
-  │              │      │           │       │           │
-  │  VCC ────────┼──────┤  3.3V     │       │           │
-  │  GND ────────┼──────┤  GND      │       │           │
-  │  AOUT────────┼──────┤  GPIO34   │       │           │
-  └──────────────┘      │           │       │           │
-                        │           │       │           │
-  ┌──────────────┐      │           │       │           │
-  │  DS18B20     │      │  GPIO4 ●──┼───────┤ [4.7kΩ]  │
-  │  Temp Probe  │      │           │       └──────────►│3.3V
-  │  VCC ────────┼──────┤  3.3V     │                   │
-  │  GND ────────┼──────┤  GND      │                   │
-  │  DATA────────┼──────┤  GPIO4    │                   │
-  └──────────────┘      │           │                   │
-                        │           │                   │
-  ┌──────────────┐      │           │                   │
-  │   pH Sensor  │      │  5V   ●   │                   │
-  │  (PH-4502C)  │      │  GND  ●   │                   │
-  │  VCC ────────┼──────┤  5V (VIN) │                   │
-  │  GND ────────┼──────┤  GND      │                   │
-  │  PO  ────────┼──────┤  GPIO35   │                   │
-  └──────────────┘      └──────────────────────────────┘
-
-  Legend:
-  ──── Wire   [R] Resistor   ● Pin   ►  Connect to
-  Red = Power (VCC)   Black = Ground   Yellow = Signal/Data
-```
-
-### 🔧 The 4.7 kΩ Pull-Up Resistor (Important!)
-
-The DS18B20 temperature sensor uses a special communication protocol called **OneWire**. Without the pull-up resistor, the data line floats and you get garbage readings.
-
-```
-  3.3V ──┬──── [4.7kΩ] ────┬──── DS18B20 DATA pin
-         │                  │
-         └──────────────────┴──── GPIO4 (ESP32)
-```
-
-You can use any resistor between **4kΩ and 10kΩ** if you don't have exactly 4.7kΩ.
+| Sensor | Sensor Pin | ESP32 Pin | Wire Color (Typical) | Why & Notes |
+|---|---|---|---|---|
+| **💧 Capacitive Soil Moisture** | VCC | **3.3V** | Red | Powers the capacitive sensor safely |
+| | GND | **GND** | Black | Ground connection |
+| | AOUT | **GPIO 34** | Yellow / Green | Analog input (ADC1 — works with WiFi) |
+| **🌡️ DS18B20 Temp Probe** | VCC | **3.3V** | Red | Power line |
+| | GND | **GND** | Black | Ground |
+| | DATA | **GPIO 4** | Yellow / White | Digital OneWire data (**Needs 4.7kΩ pull-up!**) |
+| **🧪 pH Sensor Module (PH-4502C)**| VCC | **5V (VIN)** | Red | Op-Amp board needs 5V to power properly |
+| | GND | **GND** | Black | Ground |
+| | PO (Analog Out)| **GPIO 35** | Yellow / Blue | Analog voltage representing pH (ADC1) |
 
 ---
 
-## 🛠️ Hardware Shopping List
+### 🎨 Visual ASCII Circuit Diagram
 
-| Component | Why You Need It |
-|-----------|----------------|
-| ESP32 Dev Board (any 30-pin or 38-pin) | The brain of the project |
-| Capacitive Soil Moisture Sensor v1.2 or v2.0 | Measures how wet the soil is |
-| DS18B20 Waterproof Temperature Probe | Measures soil/water temperature |
-| Analog pH Sensor Module (PH-4502C or similar) | Estimates soil pH |
-| 4.7 kΩ resistor | Pull-up for the temperature sensor |
-| Breadboard + jumper wires | For connecting everything |
-| USB cable (micro-USB or USB-C, match your ESP32) | For programming and power |
-| Laptop or Raspberry Pi | Runs the Node.js server |
+```
+                              ┌─────────────────────────────┐
+                              │       ESP32 Dev Board       │
+                              │                             │
+    💧 SOIL MOISTURE          │ 3.3V  ●────────────────┐    │
+    ┌─────────────────┐       │                        │    │
+    │  VCC (Red)      ├───────┤ 3.3V                   │    │
+    │  GND (Black)    ├───────┤ GND                    │    │
+    │  AOUT (Yellow)  ├───────┤ GPIO 34 (ADC1_CH6)     │    │
+    └─────────────────┘       │                        │    │
+                              │                        │    │
+    🌡️ DS18B20 TEMP           │                        │    │
+    ┌─────────────────┐       │                        │    │
+    │  VCC (Red)      ├───────┤ 3.3V                   │    │
+    │  GND (Black)    ├───────┤ GND                    │    │
+    │                 │       │               [4.7kΩ]  │    │
+    │  DATA (Yellow)  ├───┬───┤ GPIO 4 ───────█───────┘    │
+    └─────────────────┘   │   │  (Resistor connects         │
+                          │   │   DATA to 3.3V!)            │
+                          │   │                             │
+    🧪 pH SENSOR (PH-4502C)   │                             │
+    ┌─────────────────┐       │                             │
+    │  VCC (Red)      ├───────┤ 5V (VIN)                    │
+    │  GND (Black)    ├───────┤ GND                         │
+    │  PO / Vout      ├───────┤ GPIO 35 (ADC1_CH7)          │
+    └─────────────────┘       │                             │
+                              └─────────────────────────────┘
+
+    Color Code Guide:
+    🔴 Red    = Power (+3.3V or +5V)
+    ⚫ Black  = Ground (GND)
+    🟡 Yellow = Signal / Data
+    🟦 4.7kΩ  = Pull-up resistor for DS18B20 temperature probe
+```
 
 ---
 
-## ⚙️ Part 1 — Setting Up the Server
+## ⚙️ Step 1: Configure & Flash the ESP32
 
-### Prerequisites
-
-- [Node.js](https://nodejs.org) v18 or newer — download from nodejs.org
-- A free [Groq API key](https://console.groq.com/keys) — sign up takes 1 minute, no credit card needed
-
-### Steps
-
-```bash
-# 1. Go into the server folder
-cd server
-
-# 2. Install dependencies
-npm install
-
-# 3. Copy the example env file and add your Groq key
-copy .env.example .env         # Windows
-# cp .env.example .env         # Mac/Linux
-
-# 4. Open .env in Notepad and paste your Groq key:
-#    GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxx
-
-# 5. Start the server
-npm run dev
-```
-
-You should see:
-
-```
-🌱 Plant-o-Meter server running at http://localhost:4000
-   Health check: http://localhost:4000/health
-```
-
-### Finding Your Laptop's Local IP Address
-
-The ESP32 needs to know your laptop's IP address to send data to it.
-
-**Windows:**
-```
-ipconfig
-```
-Look for `IPv4 Address` under your WiFi adapter. It will look like `192.168.1.100`.
-
-**Mac/Linux:**
-```bash
-ifconfig | grep "inet "
-```
-
-> ⚠️ **Important:** Both the ESP32 and your laptop must be on the **same WiFi network**!
-
-### Server API Endpoints
-
-| Method | URL | What it does |
-|--------|-----|--------------|
-| `GET` | `/health` | Check the server is running |
-| `POST` | `/api/readings` | ESP32 sends sensor data here |
-| `GET` | `/api/readings/latest` | Get the most recent reading |
-| `GET` | `/api/readings/history?limit=50` | Get last 50 readings for charts |
-| `POST` | `/api/suggest-tree` | Ask AI to suggest trees |
-
----
-
-## 📟 Part 2 — Flashing the ESP32
-
-### Option A: Arduino IDE (Recommended for Beginners)
-
-#### Step 1 — Install Arduino IDE
-
-Download from [arduino.cc/en/software](https://www.arduino.cc/en/software). Install version 2.x.
-
-#### Step 2 — Add ESP32 Board Support
-
-1. Open Arduino IDE
-2. Go to **File → Preferences**
-3. In the "Additional boards manager URLs" box, paste:
+### A. Install Arduino IDE
+1. Download and install [Arduino IDE 2.x](https://www.arduino.cc/en/software).
+2. Open **File → Preferences** in Arduino IDE.
+3. In **Additional boards manager URLs**, add:
    ```
    https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
    ```
-4. Click OK
-5. Go to **Tools → Board → Boards Manager**
-6. Search for `esp32` and install "**esp32 by Espressif Systems**"
+4. Open **Tools → Board → Boards Manager**, search for `esp32`, and click **Install**.
 
-#### Step 3 — Install Libraries
+### B. Install Required Libraries
+Open **Tools → Manage Libraries** (`Ctrl+Shift+I` on Windows) and install:
+1. `OneWire` (by Paul Stoffregen)
+2. `DallasTemperature` (by Miles Burton)
+3. `ArduinoJson` (by Benoit Blanchon — version 6 or 7)
 
-Go to **Tools → Manage Libraries** and install these one by one:
-
-| Library Name | Author |
-|---|---|
-| `OneWire` | Paul Stoffregen |
-| `DallasTemperature` | Miles Burton |
-| `ArduinoJson` | Benoit Blanchon |
-
-#### Step 4 — Configure the Firmware
-
-Open `firmware/plant-o-meter.ino` and change these lines near the top:
+### C. Edit `firmware/config.h`
+Open `firmware/config.h` in any text editor or Arduino IDE:
 
 ```cpp
-#define WIFI_SSID       "YOUR_WIFI_SSID"      // ← Your WiFi name
-#define WIFI_PASSWORD   "YOUR_WIFI_PASSWORD"  // ← Your WiFi password
-#define SERVER_IP       "192.168.1.100"       // ← Your laptop's IP address
+// 1. Your 2.4 GHz WiFi credentials:
+#define WIFI_SSID       "MyHomeWiFi"
+#define WIFI_PASSWORD   "SecretPassword123"
+
+// 2. Your computer's local IP address:
+#define SERVER_IP       "192.168.1.100"   // <-- Set your laptop's IP!
+#define SERVER_PORT     4000
 ```
 
-#### Step 5 — Select Board and Port
+> 🔍 **How to find your Laptop's IP address:**
+> - **Windows:** Open Command Prompt or PowerShell, type `ipconfig`, find `IPv4 Address` (e.g. `192.168.1.100`).
+> - **Mac / Linux:** Open Terminal, type `ifconfig` or `ip a`.
 
-1. Plug in your ESP32 via USB
-2. **Tools → Board → ESP32 Arduino → "ESP32 Dev Module"**
-3. **Tools → Port → COM3** (or whatever port appears — check Device Manager on Windows)
-
-#### Step 6 — Upload
-
-Click the **→ Upload** button (or press `Ctrl+U`).
-
-Watch the progress bar. When you see `Hard resetting via RTS pin...` it worked! 🎉
-
-#### Step 7 — Open Serial Monitor
-
-Go to **Tools → Serial Monitor** and set baud rate to **115200**.
-
-You should see readings every 5 seconds:
-
-```
-─── Reading sensors ─────────────────────────
-  Moisture    : 63.2 %
-  Temperature : 27.8 °C
-  pH (est.)   : 6.73
-─────────────────────────────────────────────
-  [HTTP] ✓ Server replied 201
-```
+### D. Upload Code to ESP32
+1. Plug your ESP32 board into your laptop using a micro-USB or USB-C cable.
+2. In Arduino IDE, click **File → Open** and choose `firmware/plant-o-meter.ino`.
+3. Select your board: **Tools → Board → esp32 → ESP32 Dev Module**.
+4. Select your COM Port: **Tools → Port → COM...** (e.g. COM3 or COM4).
+5. Click the **Upload (➡️)** button.
+6. Open **Tools → Serial Monitor** and set baud rate to **115200**.
+7. You should see:
+   ```
+   [WiFi] Connected! IP = 192.168.1.120
+   ─── Reading sensors ─────────────────────────
+     Moisture    : 62.4 %
+     Temperature : 28.1 °C
+     pH (est.)   : 6.85
+   ─── [HTTP] ✓ Server replied 201 ─────────────
+   ```
 
 ---
 
-### Option B: PlatformIO (For Advanced Users)
+## 💻 Step 2: Run the Server & Admin Panel
 
-If you use VS Code + PlatformIO, create a `platformio.ini` in the `firmware/` folder:
+You only need **Node.js (v18+)** installed. The server hosts both the REST API and the live Web Admin Panel!
 
-```ini
-[env:esp32dev]
-platform = espressif32
-board = esp32dev
-framework = arduino
-monitor_speed = 115200
-lib_deps =
-  paulstoffregen/OneWire@^2.3.7
-  milesburton/DallasTemperature@^3.11.0
-  bblanchon/ArduinoJson@^6.21.5
-```
-
-Then run `pio run --target upload`.
-
----
-
-## 🌐 Part 3 — Running the Dashboard
-
+### 1. Install Dependencies
 ```bash
-# 1. Go into the dashboard folder
-cd dashboard
-
-# 2. Install dependencies (only needed first time)
+cd server
 npm install
-
-# 3. Start the development server
-npm run dev
 ```
 
-Open your browser at **http://localhost:3000** 🎉
+### 2. Configure Environment Variables
+Copy `.env.example` to `.env`:
 
-> If the server is on a different port or machine, set `NEXT_PUBLIC_API_URL` in `dashboard/.env.local`:
-> ```
-> NEXT_PUBLIC_API_URL=http://192.168.1.100:4000
-> ```
+**Windows (PowerShell):**
+```powershell
+Copy-Item .env.example .env
+```
+**Mac / Linux:**
+```bash
+cp .env.example .env
+```
+
+Open `.env` and add your free Groq API key:
+```env
+PORT=4000
+GROQ_API_KEY=gsk_your_free_groq_api_key_here
+```
+
+> 🎁 **Get a Free Groq API Key:**
+> 1. Go to [https://console.groq.com/keys](https://console.groq.com/keys).
+> 2. Sign up with Google or GitHub (100% free, no credit card required).
+> 3. Click **Create API Key**, copy it, and paste it into `.env`.
+
+### 3. Start the Server
+```bash
+npm start
+```
+*(or `npm run dev` for automatic reloading)*
+
+### 4. Open the Admin Panel
+Open your browser and navigate to:
+👉 **[http://localhost:4000](http://localhost:4000)**
+
+You will see:
+- 💧 **Live Soil Moisture Gauge** (%) with color alerts
+- 🌡️ **Soil Temperature Gauge** (°C)
+- 🧪 **Estimated pH Gauge**
+- 📈 **Real-Time Interactive History Trend Chart**
+- 🌳 **"Suggest a Tree!" Button**: Uses Groq AI to suggest Bangladesh-native trees (Mango, Neem, Jackfruit, Guava, etc.) matching your exact soil!
+- 🧪 **"Test Sim" Button**: Click anytime to generate test readings even before your hardware is plugged in!
 
 ---
 
-## 🧪 Sensor Calibration Guide
+## 🎛️ Sensor Calibration Guide
 
-Capacitive soil sensors and pH sensors vary between units — you **must** calibrate yours for accurate readings.
-
-### 💧 Soil Moisture Calibration
-
-The sensor returns a raw ADC number between 0 and 4095. Dry soil gives a **high** number, wet soil gives a **low** number.
-
-```
-Steps:
-1. Hold the sensor in dry air (not touching anything)
-2. Open Serial Monitor on Arduino IDE
-3. Look for the line:  [Moisture] raw ADC = XXXX
-4. Write down that number → this is your MOISTURE_DRY value
-
-5. Submerge just the sensor tip (not the electronics!) in water
-6. Look for the ADC value again
-7. Write down that number → this is your MOISTURE_WET value
-
-8. Open firmware/plant-o-meter.ino and update:
-   #define MOISTURE_DRY   3200   ← replace with your dry reading
-   #define MOISTURE_WET   1100   ← replace with your wet reading
-
-9. Re-upload the firmware
-```
-
-Typical values: Dry ≈ 2800–3500, Wet ≈ 900–1500 (varies by sensor brand)
-
-### 🧪 pH Calibration (Two-Point Method)
-
-You'll need **pH buffer solutions** (small bottles of pH 4 and pH 7 solution, available cheaply online or at aquarium shops).
-
-```
-Steps:
-1. Rinse the pH probe with distilled water and dry gently
-2. Dip it in the pH 7 buffer solution
-3. Wait 30 seconds for the reading to stabilise
-4. Open Serial Monitor, look for:  [pH] averaged ADC = XXXX
-5. Write down the ADC number → this is PH_CAL_ADC_7
-
-6. Rinse the probe again
-7. Dip it in the pH 4 buffer solution
-8. Wait 30 seconds, note the ADC reading → this is PH_CAL_ADC_4
-
-9. Update the firmware:
-   #define PH_CAL_ADC_7   1900   ← your pH 7 reading
-   #define PH_CAL_ADC_4   2400   ← your pH 4 reading
-
-10. Re-upload the firmware
-
-⚠️  Note: The firmware averages 10 ADC readings per sample to reduce noise.
-    Even so, pH readings are estimates (±0.5 pH) — label them "estimated pH"
-    on your display to be scientifically honest!
-```
-
----
-
-## 🆓 Getting a Free Groq API Key
-
-1. Go to [console.groq.com](https://console.groq.com)
-2. Click **"Sign Up"** (free, no credit card)
-3. Go to **API Keys** in the left sidebar
-4. Click **"Create API Key"**
-5. Copy the key (starts with `gsk_...`)
-6. Paste it into `server/.env`:
-   ```
-   GROQ_API_KEY=gsk_your_key_here
+### 1. 💧 Soil Moisture Sensor Calibration
+Capacitive soil moisture sensors give raw ADC values (typically between 1000 and 3500):
+1. Keep sensor in **dry air** → open Serial Monitor → note raw ADC value (e.g. `3200`).
+2. Dip the sensor tip into a glass of **water** (do NOT submerge the electronics!) → note raw ADC (e.g. `1100`).
+3. In `firmware/config.h`, set:
+   ```cpp
+   #define MOISTURE_DRY   3200   // Reading in dry air (0% moisture)
+   #define MOISTURE_WET   1100   // Reading in water (100% moisture)
    ```
 
-The free tier gives you plenty of requests for a school demo — more than enough!
+### 2. 🧪 pH Sensor Calibration (Two-Point Linear Calibration)
+Analog pH sensors (PH-4502C) drift and are noisy. The firmware automatically **averages 10 samples** to provide a stable estimate.
+1. Dip probe in **pH 7.0 buffer solution** → note raw ADC from Serial Monitor (e.g. `1900`).
+2. Dip probe in **pH 4.0 buffer solution** → note raw ADC (e.g. `2400`).
+3. In `firmware/config.h`, set:
+   ```cpp
+   #define PH_CAL_ADC_7   1900   // Reading at pH 7.0
+   #define PH_CAL_ADC_4   2400   // Reading at pH 4.0
+   ```
 
 ---
 
-## 🚀 Quick-Start Checklist (Day of Demo)
+## 🛠️ API Reference
 
-- [ ] Laptop charged + charger packed
-- [ ] ESP32 firmware updated with correct WiFi SSID/password
-- [ ] ESP32 firmware updated with correct server IP
-- [ ] Server `.env` has the Groq API key
-- [ ] All sensors wired correctly (check pull-up resistor!)
-- [ ] Both ESP32 and laptop on the **same WiFi**
-- [ ] Start server: `cd server && npm run dev`
-- [ ] Start dashboard: `cd dashboard && npm run dev`
-- [ ] Open `http://localhost:3000` on the display/projector
-- [ ] Check Serial Monitor — confirm readings posting every 5s
-- [ ] Test "Suggest a Tree" button
+The server exposes simple REST endpoints:
 
----
-
-## 🐛 Troubleshooting
-
-| Problem | What to check |
-|---------|---------------|
-| Serial Monitor shows `WiFi Failed` | Check SSID/password in firmware. 2.4 GHz only — ESP32 can't use 5 GHz WiFi! |
-| `DS18B20 not found!` in Serial | Check the 4.7 kΩ pull-up resistor. Check GPIO4 wiring. |
-| Moisture always 0% or 100% | Re-do calibration (MOISTURE_DRY/WET values in firmware) |
-| pH reading is negative or > 14 | Re-do calibration (PH_CAL_ADC_7/4 values in firmware) |
-| Server replies 400 Bad Request | Check JSON body from ESP32 in Serial Monitor |
-| Dashboard shows "No readings yet" | Server is up but ESP32 hasn't sent data — check Serial Monitor |
-| "Suggest a Tree" returns an error | Check GROQ_API_KEY in `.env` and internet connection |
-| `pino-pretty` module not found | Run `npm install` again inside the `server/` folder |
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | Serves the interactive Admin Panel Web UI |
+| `GET` | `/health` | Server health check (`{"status":"ok"}`) |
+| `POST` | `/api/readings` | ESP32 posts JSON payload with `{ moisture, temperature, ph, deviceId }` |
+| `GET` | `/api/readings/latest` | Returns latest sensor reading from SQLite |
+| `GET` | `/api/readings/history?limit=30` | Returns recent sensor readings for charting |
+| `POST` | `/api/suggest-tree` | Calls Groq AI with soil parameters & returns recommended trees |
 
 ---
 
-## 💡 How It Works — For Kids!
+## ❓ Frequently Asked Questions (FAQ)
 
-```
-  🌱 Sensors              🖥️ Your Laptop              🤖 AI (Cloud)
-  ──────────              ──────────────              ─────────────
+**Q: Can I use this without sensors connected?**  
+**A:** Yes! Open `http://localhost:4000` and click the **"🧪 Test Sim"** button in the top right. It will immediately generate test soil data and update all gauges and charts.
 
-  The soil sensor    →    The server writes      →    The Groq AI reads
-  feels the soil          all the numbers             the numbers and
-  and sends the           into a database             thinks: "What
-  moisture, temp,         like a spreadsheet.         trees would love
-  and pH numbers          The dashboard reads         this soil?"
-  to the server           from there and shows
-  every 5 seconds!        the big gauges.
-                                                      It answers in
-                                                      kid-friendly
-                                                      English! 🌳
-```
+**Q: Why does the ESP32 fail to connect to WiFi?**  
+**A:** ESP32 only supports **2.4 GHz WiFi**. If your router has both 5 GHz and 2.4 GHz, make sure to connect to the 2.4 GHz network name.
 
-**Why HTTP instead of MQTT?**
-MQTT is the "proper" IoT protocol used when you have many devices. For our demo with one ESP32, plain HTTP is simpler — one less thing to break on stage. Ask your teacher about MQTT if you want to learn more!
+**Q: The ESP32 says `Server replied 404` or connection refused?**  
+**A:** Make sure `SERVER_IP` in `firmware/config.h` matches your laptop's current IP address, and both the laptop and ESP32 are connected to the same WiFi network.
 
 ---
 
-## 📚 Learn More
-
-- [ESP32 Pinout Reference](https://randomnerdtutorials.com/esp32-pinout-reference-gpios/)
-- [DS18B20 Tutorial for Kids](https://randomnerdtutorials.com/esp32-ds18b20-temperature-arduino-ide/)
-- [What is pH?](https://www.sciencefun.org/kidszone/experiments/ph-scale/) — Science Fun for Kids
-- [Groq API Docs](https://console.groq.com/docs) — Free AI API
-- [Fastify Docs](https://fastify.dev) — Node.js web framework
-
----
-
-## 📝 License
-
-MIT License — free to use for school projects, science fairs, and learning! 🎓
-
----
-
-*Made with ❤️ by ZAN Tech · Plant-o-Meter v1.0*
+## 📜 License
+MIT License · Created for STEM education and young innovators! 🌱
