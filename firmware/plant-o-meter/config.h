@@ -20,7 +20,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. Telemetry Ingestion Server (Edge Node / Host PC)
 // ─────────────────────────────────────────────────────────────────────────────
-#define SERVER_IP       "192.168.1.100"         // Host PC IPv4 Address
+#define SERVER_IP       "192.168.0.114"         // Host PC IPv4 Address
 #define SERVER_PORT     4000                    // Telemetry Ingestion HTTP Port
 #define DEVICE_ID       "esp32-01"              // Unique Edge Station Node Identifier
 

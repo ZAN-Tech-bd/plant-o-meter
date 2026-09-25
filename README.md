@@ -192,11 +192,38 @@ The gateway console will output:
 ```
 🌱 Plant-o-Meter All-in-One Server running!
    Admin Panel Dashboard : http://localhost:4000
+   On your Wi-Fi/LAN     : http://192.168.0.114:4000
    Health check          : http://localhost:4000/health
    Latest reading API    : http://localhost:4000/api/readings/latest
 ```
 
 Open your browser at **`http://localhost:4000`** to access the industrial telemetry console.
+
+### 5.3 Accessing the Dashboard from a Mobile Device
+The server listens on all network interfaces (`0.0.0.0`), and the dashboard adapts to phone and tablet screens. Any device on the same network can open it.
+
+1. Start the server on the host computer (`npm start`).
+2. Connect your phone to the **same Wi-Fi network** as the host computer.
+3. Copy the `On your Wi-Fi/LAN` address from the server console, for example `http://192.168.0.114:4000`.
+4. Open that address in the phone's browser (Chrome, Safari, etc.).
+
+> **Tip:** Add the page to your home screen for app-like access. In Chrome, use **⋮ → Add to Home screen**. In Safari, use **Share → Add to Home Screen**.
+
+**Troubleshooting**
+
+| Symptom | Fix |
+|---|---|
+| Page does not load on the phone | First open `http://<host-ip>:4000` on the host computer itself to confirm the server is running. |
+| Loads on the computer but not on the phone | Allow inbound TCP port `4000` in the host firewall. If Windows shows a firewall prompt for Node.js, click **Allow**. |
+| Still blocked | Turn off **AP / client isolation** on the router. Guest Wi-Fi networks often enable it. |
+| Address stopped working | The router gave the host a new IP. Restart the server and use the new address it prints, or reserve a fixed IP for the host in the router. |
+
+To create the Windows firewall rule manually, run this in an Administrator PowerShell:
+```powershell
+New-NetFirewallRule -DisplayName "Plant-o-Meter 4000" -Direction Inbound -Protocol TCP -LocalPort 4000 -Action Allow
+```
+
+> Use `http://`, not `https://`. The server does not serve TLS.
 
 ---
 

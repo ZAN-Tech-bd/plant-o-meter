@@ -9,6 +9,7 @@
  */
 
 import 'dotenv/config';
+import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import Fastify from 'fastify';
@@ -72,6 +73,11 @@ try {
 
   console.log(`\n🌱 Plant-o-Meter All-in-One Server running!`);
   console.log(`   Admin Panel Dashboard : http://localhost:${PORT}`);
+  for (const addr of Object.values(os.networkInterfaces()).flat()) {
+    if (addr?.family === 'IPv4' && !addr.internal) {
+      console.log(`   On your Wi-Fi/LAN     : http://${addr.address}:${PORT}`);
+    }
+  }
   console.log(`   Health check          : http://localhost:${PORT}/health`);
   console.log(`   Latest reading API    : http://localhost:${PORT}/api/readings/latest\n`);
 } catch (err) {
