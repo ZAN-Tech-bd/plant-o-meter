@@ -38,7 +38,17 @@
 #define PIN_LED          2   // Onboard Telemetry Activity LED Indicator
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 5. Sensor Calibration Constants & Signal Processing
+// 5. LCD Display (I2C 16x2) — shows the exact same readings sent to the server
+// ─────────────────────────────────────────────────────────────────────────────
+#define LCD_ENABLED      true   // set to false if you don't have an LCD wired up
+#define LCD_I2C_ADDRESS  0x27   // most modules are 0x27; a few are 0x3F — scan if unsure
+#define LCD_COLUMNS      16
+#define LCD_ROWS         2
+#define PIN_LCD_SDA      21     // ESP32 default I2C data pin
+#define PIN_LCD_SCL      22     // ESP32 default I2C clock pin
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 6. Sensor Calibration Constants & Signal Processing
 // ─────────────────────────────────────────────────────────────────────────────
 // Capacitive Volumetric Soil Moisture Calibration (12-bit ADC: 0 - 4095)
 #define MOISTURE_DRY   3200   // Sensor ADC value in desiccated/air environment (0%)

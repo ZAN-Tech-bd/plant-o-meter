@@ -1,24 +1,35 @@
-# Plant-o-Meter™ — Industrial Agritech Telemetry & AI Decision Suite
-### Proprietary Telemetry Platform Developed by ZAN Tech
+# Plant-o-Meter™ — A Fun Smart-Plant Project by ZAN Tech
+### Watch your plant's soil moisture, temperature, and pH live — on a screen AND on a webpage!
 
 **Copyright © 2026 ZAN Tech. All Rights Reserved.**  
 *Confidential & Proprietary — Developed by the Agritech & IoT Engineering Division at ZAN Tech.*
 
 ---
 
-## 1. Executive Overview
+## 1. What Is This? (Read This First!)
 
-**Plant-o-Meter™** is an industrial-grade IoT telemetry acquisition platform and agronomic advisory system engineered by **ZAN Tech**. The system integrates edge sensory hardware (ESP32) with a high-throughput Node.js/Fastify edge telemetry gateway and an autonomous agronomic decision support engine powered by Groq Llama-3.1 inference.
+**Plant-o-Meter™** is a little computer (called an **ESP32**) with three sensors stuck in a plant pot. It checks:
 
-The platform provides continuous physicochemical characterization of agricultural soils, real-time time-series telemetry trends, and automated agro-ecological species suitability matching tailored specifically to Bangladesh agrarian regions.
+- 💧 How **wet** the soil is
+- 🌡️ How **warm** the soil is
+- 🧪 How **acidic or basic** the soil is (pH)
+
+Every 5 seconds it:
+1. Reads the three sensors.
+2. Shows the numbers on a small **LCD screen** sitting right next to the plant.
+3. Sends those *exact same* numbers over Wi-Fi to a computer running a web dashboard, so you can also watch the plant from your phone or laptop.
+
+The LCD and the website never disagree — they always show the same reading, because the LCD is updated with the very same numbers that get sent to the server.
 
 ```
 ┌─────────────────────────────────┐
 │     ESP32 Edge Microstation     │
 │                                 │
-│  • Volumetric Soil Moisture     │          WiFi HTTP/1.1 REST (5000ms Cycle)
-│  • High-Precision Temp (DS18B20)│ ──────────────────────────────────────────────────┐
-│  • Potentiometric pH (PH-4502C) │       Payload: { deviceId, moisture, temp, ph }   │
+│  • Soil Moisture Sensor         │          WiFi HTTP/1.1 REST (5000ms Cycle)
+│  • Temperature Probe (DS18B20)  │ ──────────────────────────────────────────────────┐
+│  • pH Sensor (PH-4502C)         │       Payload: { deviceId, moisture, temp, ph }   │
+│  • 16x2 I2C LCD (shows the      │                                                   │
+│    same numbers, right here)    │                                                   │
 └─────────────────────────────────┘                                                   │
                                                                                       ▼
                                                                      ┌─────────────────────────────────┐
@@ -33,13 +44,15 @@ The platform provides continuous physicochemical characterization of agricultura
                                       ┌───────────────────────────────────────────────┴───────────────────────────────────────────────┐
                                       ▼                                                                                               ▼
                        ┌─────────────────────────────┐                                                                 ┌─────────────────────────────┐
-                       │ Enterprise Web Admin Panel  │                 Autonomous Agronomic Advisory                   │  Groq Cloud Inference Engine│
+                       │ Enterprise Web Admin Panel  │                 Autonomous Agronomic Advisory                   │ Google Gemini Inference API │
                        │ http://localhost:4000       │ ──────────────────────────────────────────────────────────────► │  Model: llama-3.1-8b-instant│
                        │ • Multi-Channel Live Metrics│ ◄────────────────────────────────────────────────────────────── │  Agro-Ecological Suitability│
                        │ • Temporal Trend Analytics  │                    Structured JSON Response                     └─────────────────────────────┘
                        │ • Telemetry CSV Data Export │
                        └─────────────────────────────┘
 ```
+
+> **Note on the dashboard's "Sim" button:** the web dashboard has a button that injects a *fake, random* reading so you can see the charts move without any hardware connected — that's only for testing the website, it never touches the LCD or the real sensors.
 
 ---
 
@@ -48,15 +61,15 @@ The platform provides continuous physicochemical characterization of agricultura
 ```
 plant-o-meter/
 ├── firmware/
-│   ├── config.h               # Hardware pinouts, calibration constants, WiFi & server IP settings
-│   └── plant-o-meter.ino      # ESP32 C++ edge firmware (ADC sampling, OneWire bus, HTTP client)
+│   ├── config.h               # Hardware pinouts, LCD settings, calibration constants, WiFi & server IP
+│   └── plant-o-meter.ino      # ESP32 C++ edge firmware (ADC sampling, OneWire bus, LCD, HTTP client)
 ├── server/
 │   ├── public/
 │   │   └── index.html         # Industrial dark-theme admin dashboard (HTML5, SVG, Chart.js)
 │   ├── src/
 │   │   ├── index.js           # Fastify server bootstrap & static file routing
 │   │   ├── db.js              # SQLite database layer with prepared queries
-│   │   ├── groq.js            # Groq Cloud AI agronomic recommendation client
+│   │   ├── gemini.js          # Google Gemini AI agronomic recommendation client
 │   │   └── routes/
 │   │       ├── readings.js    # Telemetry ingestion POST & historical query GET endpoints
 │   │       └── suggest-tree.js# AI agronomic advisory endpoint
@@ -69,7 +82,17 @@ plant-o-meter/
 
 ---
 
-## 3. Hardware Schematic & Pinout Matrix
+## 3. What You Need & How To Wire It
+
+### Parts List
+
+- 1x ESP32 Dev Board
+- 1x Capacitive Soil Moisture Sensor
+- 1x DS18B20 Waterproof Temperature Probe + 1x 4.7 kΩ resistor
+- 1x PH-4502C pH Sensor Module
+- 1x **16x2 I2C LCD Display** (the kind with the small blue "I2C backpack" board on the back — it only needs 4 wires)
+- 1x Onboard/External LED (optional, blinks when a reading is sent)
+- Jumper wires + a breadboard
 
 ### Pin Assignment Specification
 
@@ -84,6 +107,10 @@ plant-o-meter/
 | **Potentiometric pH Unit** | VCC | **5V (VIN)** | Power | 5.0V DC | Instrumentation amplifier supply |
 | | GND | **GND** | Ground | 0V | System common ground |
 | | PO (Analog) | **GPIO 35** | Analog Input | 0 – 3.3V | Dedicated ADC1 channel 7 |
+| **16x2 I2C LCD Display** | VCC | **5V (VIN)** | Power | 5.0V DC | Most I2C backpacks need 5V to light the backlight |
+| | GND | **GND** | Ground | 0V | System common ground |
+| | SDA | **GPIO 21** | I2C Data | 3.3V Logic | ESP32 default I2C data pin |
+| | SCL | **GPIO 22** | I2C Clock | 3.3V Logic | ESP32 default I2C clock pin |
 
 ---
 
@@ -115,8 +142,18 @@ plant-o-meter/
     │  GND (Ground)   ├───────┤ GND                         │
     │  PO (Analog)    ├───────┤ GPIO 35 (ADC1_CH7)          │
     └─────────────────┘       │                             │
+                              │                             │
+    16x2 I2C LCD DISPLAY      │                             │
+    ┌─────────────────┐       │                             │
+    │  VCC (Power)    ├───────┤ 5V (VIN Rail)               │
+    │  GND (Ground)   ├───────┤ GND                         │
+    │  SDA (Data)     ├───────┤ GPIO 21 (I2C SDA)           │
+    │  SCL (Clock)    ├───────┤ GPIO 22 (I2C SCL)           │
+    └─────────────────┘       │                             │
                               └─────────────────────────────┘
 ```
+
+> **Kid-friendly tip:** the LCD's I2C backpack has only 4 pins — `GND`, `VCC`, `SDA`, `SCL`. Match each letter to the ESP32 pin with the same name in the table above and you can't get it wrong. No soldering needed if you use jumper wires and a breadboard.
 
 ---
 
@@ -128,10 +165,11 @@ plant-o-meter/
    ```
    https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
    ```
-3. Install the required C++ driver libraries via the Library Manager:
+3. Install the required C++ driver libraries via the Library Manager (**Sketch → Include Library → Manage Libraries...**, search each name below, click Install):
    - `OneWire` (by Paul Stoffregen)
    - `DallasTemperature` (by Miles Burton)
    - `ArduinoJson` (v6 or v7 by Benoit Blanchon)
+   - `LiquidCrystal I2C` (by Frank de Brabander) — this drives the LCD screen
 
 ### 4.2 Network & Edge Station Settings
 Open `firmware/config.h` and configure your target network credentials:
@@ -146,6 +184,16 @@ Open `firmware/config.h` and configure your target network credentials:
 #define SERVER_PORT     4000
 #define DEVICE_ID       "esp32-01"
 ```
+
+Don't have an LCD wired up yet? Just set `LCD_ENABLED` to `false` in `config.h` and the firmware skips it entirely — everything else still works and still posts to the server:
+
+```cpp
+// 5. LCD Display (I2C 16x2) — shows the exact same readings sent to the server
+#define LCD_ENABLED      true   // set to false if you don't have an LCD wired up
+#define LCD_I2C_ADDRESS  0x27   // most modules are 0x27; a few are 0x3F — scan if unsure
+```
+
+> **LCD shows nothing / shows boxes?** Your module's I2C address is probably `0x3F` instead of `0x27` — change `LCD_I2C_ADDRESS` in `config.h` and re-upload. If you're not sure, run an "I2C Scanner" sketch (search Arduino examples) to find the real address.
 
 ### 4.3 Flashing the Microcontroller
 1. Connect the ESP32 via USB.
@@ -172,10 +220,10 @@ Open `firmware/config.h` and configure your target network credentials:
    Copy-Item .env.example .env     # Windows
    cp .env.example .env            # Linux / macOS
    ```
-4. Configure your Groq API credentials in `.env`:
+4. Configure your Google Gemini API credentials in `.env`:
    ```env
    PORT=4000
-   GROQ_API_KEY=gsk_your_groq_api_key_here
+   GEMINI_API_KEY=your_gemini_api_key_here
    ```
 
 ### 5.2 Server Execution
@@ -231,6 +279,7 @@ New-NetFirewallRule -DisplayName "Plant-o-Meter 4000" -Direction Inbound -Protoc
 
 The integrated web dashboard provides real-time situational awareness:
 
+- **On-Device LCD Screen**: The 16x2 LCD next to the plant always shows the exact same moisture, temperature, and pH values that just got sent to the server — no guessing whether the dashboard is "catching up."
 - **Volumetric Water Content (% VWC)**: Calibrated moisture gauge with optimal/warning threshold detection.
 - **Sub-Surface Thermal Metric (°C)**: High-resolution OneWire temperature monitoring.
 - **Physicochemical Reaction (pH)**: Real-time hydrogen-ion measurement with buffer categorization.

@@ -9,7 +9,7 @@
  */
 
 import { getLatestReading } from '../db.js';
-import { suggestTrees } from '../groq.js';
+import { suggestTrees } from '../gemini.js';
 
 /**
  * @param {import('fastify').FastifyInstance} fastify
@@ -57,17 +57,17 @@ export default async function suggestTreeRoutes(fastify) {
           temperature: reading.temperature,
           ph: reading.ph,
         },
-        'Calling Groq for tree suggestions'
+        'Calling Gemini for tree suggestions'
       );
 
       try {
         const result = await suggestTrees(reading);
         return reply.send(result);
       } catch (err) {
-        fastify.log.error(err, 'Groq API call failed');
+        fastify.log.error(err, 'Gemini API call failed');
         return reply.code(502).send({
           error:
-            'AI suggestion failed. Check your GROQ_API_KEY and internet connection.',
+            'AI suggestion failed. Check your GEMINI_API_KEY and internet connection.',
           detail: err.message,
         });
       }

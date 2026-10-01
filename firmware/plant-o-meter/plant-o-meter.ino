@@ -22,11 +22,19 @@
 
 #include "config.h"
 
+#if LCD_ENABLED
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#endif
+
 // ─────────────────────────────────────────────────────────────────────────────
 //  INTERNALS — no need to edit below here
 // ─────────────────────────────────────────────────────────────────────────────
 OneWire          oneWire(PIN_ONEWIRE);
 DallasTemperature tempSensor(&oneWire);
+#if LCD_ENABLED
+LiquidCrystal_I2C lcd(LCD_I2C_ADDRESS, LCD_COLUMNS, LCD_ROWS);
+#endif
 
 unsigned long lastReadingMs = 0;
 int           wifiRetryCount = 0;
@@ -72,6 +80,19 @@ float readPH() {
   float ph    = 7.0f + slope * ((float)PH_CAL_ADC_7 - avgAdc);
 
   return constrain(ph, 0.0f, 14.0f);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  HELPER: show the same moisture/temp/pH values on the LCD that we send
+//  to the server, so the screen on the plant always matches the dashboard.
+// ─────────────────────────────────────────────────────────────────────────────
+void updateLCD(float moisture, float temperature, float ph) {
+#if LCD_ENABLED
+  lcd.setCursor(0, 0);
+  lcd.printf("M:%3.0f%% T:%4.1fC  ", moisture, temperature);
+  lcd.setCursor(0, 1);
+  lcd.printf("pH:%4.2f         ", ph);
+#endif
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -163,6 +184,16 @@ void setup() {
 
   tempSensor.begin();
 
+#if LCD_ENABLED
+  Wire.begin(PIN_LCD_SDA, PIN_LCD_SCL);
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("Plant-o-Meter");
+  lcd.setCursor(0, 1);
+  lcd.print("Connecting WiFi.");
+#endif
+
   ensureWiFi();
 
   Serial.println("[Setup] Ready. First reading in 2 s...\n");
@@ -188,6 +219,10 @@ void loop() {
     Serial.printf("  Temperature : %.1f °C\n", temperature);
     Serial.printf("  pH (est.)   : %.2f\n",    ph);
     Serial.println("─────────────────────────────────────────────");
+
+    // Always update the LCD with the exact values we are about to send -
+    // the screen on the device should always match the server dashboard.
+    updateLCD(moisture, temperature, ph);
 
     // Skip posting if temperature sensor is disconnected
     if (temperature == -999.0f) {
